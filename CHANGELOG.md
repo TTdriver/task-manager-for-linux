@@ -1,6 +1,9 @@
 # Changelog
 
-## Unreleased
+## 0.1.1 — 2026-10-07
+
+- Check for updates once at launch and show a subtle corner link only when a newer version is available.
+- Keep failed or offline update checks silent.
 
 - Display version 0.1.0 in the window title and beside the Task Manager heading.
 

@@ -5,16 +5,37 @@ import platform
 import queue
 import threading
 import time
+import urllib.request
+import webbrowser
 from collections import deque
 from pathlib import Path
 import tkinter as tk
 from tkinter import ttk, messagebox
 import psutil
 
-APP_VERSION = '0.1.0'
+APP_VERSION = '0.1.1'
+UPDATE_VERSION_URL = 'https://raw.githubusercontent.com/TTdriver/task-manager-for-linux/main/VERSION'
+DOWNLOAD_URL = 'https://github.com/TTdriver/task-manager-for-linux#installation'
 
 BG='#171717'; PANEL='#202020'; TEXT='#f1f1f1'; MUTED='#aaaaaa'
 COLORS={'CPU':'#67c6ee','Memory':'#bb8eea','Disk':'#8bd497','Network':'#efa968'}
+
+def version_tuple(value):
+    parts = value.strip().split('.')
+    if len(parts) != 3 or any(not part.isascii() or not part.isdigit() for part in parts):
+        raise ValueError('Invalid version')
+    return tuple(int(part) for part in parts)
+
+def available_update():
+    try:
+        request = urllib.request.Request(UPDATE_VERSION_URL, headers={'User-Agent': 'SimpleTaskManager/' + APP_VERSION})
+        with urllib.request.urlopen(request, timeout=5) as response:
+            remote = response.read(128).decode('ascii').strip()
+        if version_tuple(remote) > version_tuple(APP_VERSION):
+            return remote
+    except (OSError, ValueError):
+        pass
+    return None
 
 def size(n):
     for unit in ('B','KB','MB','GB','TB'):
@@ -83,11 +104,21 @@ class App:
         for page in ('Processes','Performance','Storage'):
             b=tk.Button(nav,text=page,bg=PANEL,fg=TEXT,activebackground='#343434',activeforeground=TEXT,relief='flat',borderwidth=0,highlightthickness=0,padx=20,pady=9,command=lambda p=page:self.show_page(p));b.pack(side='left',padx=(0,8));self.nav[page]=b
         self.pause=ttk.Button(nav,text='Pause updates',command=self.toggle_pause);self.pause.pack(side='right')
+        self.update_messages = queue.Queue(maxsize=1)
+        footer_bar=tk.Frame(root,bg=BG);footer_bar.pack(side='bottom',fill='x',padx=24,pady=12)
+        self.update_link=self.label(footer_bar,'',9,MUTED)
+        self.update_link.pack(side='right')
         self.body=tk.Frame(root,bg=BG);self.body.pack(fill='both',expand=True,padx=24)
         self.footer=tk.StringVar(value='Collecting live system data…')
-        self.label(root,self.footer,9,MUTED).pack(anchor='w',padx=24,pady=12)
+        self.label(footer_bar,self.footer,9,MUTED).pack(side='left')
         self.show_page('Performance');root.protocol('WM_DELETE_WINDOW',self.close)
         threading.Thread(target=self.worker,daemon=True).start();root.after(100,self.poll)
+        threading.Thread(target=self.check_update,daemon=True).start()
+    def check_update(self):
+        version = available_update()
+        if version and not self.closed.is_set():
+            self.update_messages.put_nowait(version)
+
     def label(self,parent,text,font=11,color=TEXT):
         kw={'textvariable':text} if isinstance(text,tk.Variable) else {'text':text}
         return tk.Label(parent,bg=parent.cget('bg'),fg=color,font=('Sans',font),anchor='w',**kw)
@@ -180,6 +211,12 @@ class App:
         columns=('device','mount','type','total','free','used');self.storage=self.table(self.body,columns)
         for c,t in zip(columns,('Device','Mount point','File system','Capacity','Available','Used')):self.storage.heading(c,text=t)
     def poll(self):
+        try:
+            version = self.update_messages.get_nowait()
+            self.update_link.configure(text=f'Update available · v{version} ↗', cursor='hand2')
+            self.update_link.bind('<Button-1>', lambda _event: webbrowser.open(DOWNLOAD_URL))
+        except queue.Empty:
+            pass
         latest=None
         try:
             while True:latest=self.messages.get_nowait()
