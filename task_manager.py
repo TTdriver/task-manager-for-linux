@@ -11,6 +11,8 @@ import tkinter as tk
 from tkinter import ttk, messagebox
 import psutil
 
+APP_VERSION = '0.1.0'
+
 BG='#171717'; PANEL='#202020'; TEXT='#f1f1f1'; MUTED='#aaaaaa'
 COLORS={'CPU':'#67c6ee','Memory':'#bb8eea','Disk':'#8bd497','Network':'#efa968'}
 
@@ -61,7 +63,7 @@ class Collector:
 
 class App:
     def __init__(self,root):
-        self.root=root;root.title('Task Manager for Linux');root.geometry('1120x760');root.minsize(900,620);root.configure(bg=BG)
+        self.root=root;root.title(f'Task Manager for Linux v{APP_VERSION}');root.geometry('1120x760');root.minsize(900,620);root.configure(bg=BG)
         self.closed=threading.Event();self.messages=queue.Queue(maxsize=2);self.collector=Collector();self.data=None
         self.history={k:deque(maxlen=60) for k in COLORS};self.selected='CPU';self.page='Performance'
         self.sort_key='cpu';self.reverse=True;self.process_map={};self.paused=False
@@ -74,6 +76,7 @@ class App:
         style.configure('TButton',padding=(12,7));style.map('TButton',background=[('active','#404040')])
         header=tk.Frame(root,bg=BG);header.pack(fill='x',padx=24,pady=(20,12))
         self.label(header,'Task Manager',20).pack(side='left')
+        self.label(header,f'v{APP_VERSION}',10,MUTED).pack(side='left',padx=(12,0))
         self.label(header,platform.node(),10,MUTED).pack(side='right')
         nav=tk.Frame(root,bg=BG);nav.pack(fill='x',padx=24,pady=(0,14))
         self.nav={}

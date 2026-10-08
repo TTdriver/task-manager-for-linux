@@ -1,5 +1,9 @@
 # Changelog
 
+## Unreleased
+
+- Display version 0.1.0 in the window title and beside the Task Manager heading.
+
 ## 0.1.0 — 2026-10-04
 
 - First working Linux desktop monitor with a Windows-inspired dark interface.
