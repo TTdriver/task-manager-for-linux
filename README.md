@@ -39,3 +39,9 @@ End task sends SIGTERM to the selected process after checking its identity. It d
 The app checks GitHub once when launched, in the background with a five-second timeout. If a newer version is available, a small link appears in the bottom-right corner. Click it to open the installation instructions. No popups, recurring checks, or automatic installations are used. Offline checks fail silently.
 
 For maintainers: update `APP_VERSION` and the root `VERSION` file together when publishing an installable update. Versions use `major.minor.patch`.
+
+## Give Thanks
+
+If you’d like to say thanks by buying me a drink or helping cover AI tokens, it’s appreciated.
+
+[Give Thanks](https://thanks.kerchnerlabs.com)
